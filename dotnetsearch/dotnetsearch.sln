@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotnetsearch 4.6", "dotnetsearch 4.6\dotnetsearch 4.6.csproj", "{45889C6B-A4B8-431C-BDAA-F94D95344984}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotnetsearch 4.5", "dotnetsearch 4.5\dotnetsearch 4.5.csproj", "{DE01AF2D-378F-40E8-AC89-BD2DED0B45B4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotnetsearch 4.0", "dotnetsearch 4.0\dotnetsearch 4.0.csproj", "{C5235AAD-63A2-4133-B244-AFAE8A19EBEF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{45889C6B-A4B8-431C-BDAA-F94D95344984}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45889C6B-A4B8-431C-BDAA-F94D95344984}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45889C6B-A4B8-431C-BDAA-F94D95344984}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45889C6B-A4B8-431C-BDAA-F94D95344984}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE01AF2D-378F-40E8-AC89-BD2DED0B45B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE01AF2D-378F-40E8-AC89-BD2DED0B45B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE01AF2D-378F-40E8-AC89-BD2DED0B45B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE01AF2D-378F-40E8-AC89-BD2DED0B45B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5235AAD-63A2-4133-B244-AFAE8A19EBEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5235AAD-63A2-4133-B244-AFAE8A19EBEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5235AAD-63A2-4133-B244-AFAE8A19EBEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5235AAD-63A2-4133-B244-AFAE8A19EBEF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
