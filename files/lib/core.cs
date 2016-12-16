@@ -125,7 +125,12 @@ namespace DotNetSearchEngine
                         weight += currentWeight;
 
                         //Puts the new weight against the record for that person
-                        row["dotnetsearch_search_weight"] = weight;
+                        //Note: we need to lock this as we are writing to the datarow which is referenced from the single datatable 
+                        //      although the datarow is singular its references from the datatable thus causing conflicts on a write in multi threads
+                        lock (updateLocker)
+                        {
+                            row["dotnetsearch_search_weight"] = weight;
+                        }
 
                         //Checks the weighting to see if we should keep it as a search record                                                            
                         /* Example:
@@ -137,7 +142,7 @@ namespace DotNetSearchEngine
                         {
                             //Locks the thread while we add the row as writing operations are not threadsafe
                             //Note: read operations are threadsafe.
-                            lock (locker)
+                            lock (addLocker)
                             {
                                 //Adds the record
                                 tempStorage.ImportRow(row);
