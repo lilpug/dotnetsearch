@@ -16,39 +16,38 @@ namespace DotNetSearchEngine
             if (temp != null && temp.Rows.Count > 0 && !string.IsNullOrWhiteSpace(settings.query))
             {
                 //Checks if caching is enabled and if we can find any results for this query thats being asked for
-                DataTable cResults = null;
+                DataTable results = null;
                 if(settings.isCacheEnabled)
                 {
-                    cResults = GetCacheResult(settings.query);
+                    results = GetCacheResult(settings.query);
                 }
 
                 //Checks if we managed to find any cached results
-                if (cResults == null)
+                if (results == null)
                 {
                     //Adds the weight column
                     temp.Columns.Add("dotnetsearch_search_weight");
 
                     //This processes the search results from the records passed
-                    var results = CoreSearch(temp);
-
-                    //Determines the order and what should be output from the search results found
-                    var complete = ReturnResults(results);
-
-                    //Removes the weight column before returning
-                    complete.Columns.Remove("dotnetsearch_search_weight");
+                    results = CoreSearch(temp);
 
                     //Checks if caching is enabled and if so adds the new results
-                    if(settings.isCacheEnabled)
+                    if (settings.isCacheEnabled)
                     {
-                        AddCacheResult(settings.query, complete);
+                        AddCacheResult(settings.query, results);
                     }
-
-                    //Removes the weight column as we no longer need it now
-                    return complete;
                 }
 
-                //Returns the cached results if found
-                return cResults;
+                //This section deals with ordering the new results found
+
+                //Determines the order and what should be output from the search results found
+                var complete = ReturnResults(results);
+
+                //Removes the weight column before returning
+                complete.Columns.Remove("dotnetsearch_search_weight");
+                
+                //Removes the weight column as we no longer need it now
+                return complete;                
             }
             //Return the original table back
             return temp;
