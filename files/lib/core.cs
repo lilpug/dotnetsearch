@@ -15,20 +15,40 @@ namespace DotNetSearchEngine
             var temp = settings.table;
             if (temp != null && temp.Rows.Count > 0 && !string.IsNullOrWhiteSpace(settings.query))
             {
-                //Adds the weight column
-                temp.Columns.Add("dotnetsearch_search_weight");
+                //Checks if caching is enabled and if we can find any results for this query thats being asked for
+                DataTable cResults = null;
+                if(settings.isCacheEnabled)
+                {
+                    cResults = GetCacheResult(settings.query);
+                }
 
-                //This processes the search results from the records passed
-                var results = CoreSearch(temp);
+                //Checks if we managed to find any cached results
+                if (cResults != null)
+                {
+                    //Adds the weight column
+                    temp.Columns.Add("dotnetsearch_search_weight");
 
-                //Determines the order and what should be output from the search results found
-                var complete = ReturnResults(results);
+                    //This processes the search results from the records passed
+                    var results = CoreSearch(temp);
 
-                //Removes the weight column before returning
-                complete.Columns.Remove("dotnetsearch_search_weight");
+                    //Determines the order and what should be output from the search results found
+                    var complete = ReturnResults(results);
 
-                //Removes the weight column as we no longer need it now
-                return complete;
+                    //Removes the weight column before returning
+                    complete.Columns.Remove("dotnetsearch_search_weight");
+
+                    //Checks if caching is enabled and if so adds the new results
+                    if(settings.isCacheEnabled)
+                    {
+                        AddCacheResult(settings.query, complete);
+                    }
+
+                    //Removes the weight column as we no longer need it now
+                    return complete;
+                }
+
+                //Returns the cached results if found
+                return cResults;
             }
             //Return the original table back
             return temp;

@@ -13,6 +13,14 @@ namespace DotNetSearchEngine
     //This class stores all the parameters required for the main search engine to be initialised
     public class SearchSettings
     {
+        //Stores the search engine name which is used for caching
+        /*Note: this is done so we can have multiple search engines in the same project but still use caching effectively
+                all that would be required is to change the name if its for a search on a different data set. */
+        public string searchEngineName = "dotnetsearch";
+
+        //Stores the flag for determining if we use a cache on the data and the results
+        public bool isCacheEnabled = true;
+
         //Stores the query string
         public string query = null;
 

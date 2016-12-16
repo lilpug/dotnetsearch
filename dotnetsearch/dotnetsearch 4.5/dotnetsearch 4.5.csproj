@@ -50,6 +50,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\files\lib\caching.cs">
+      <Link>lib\caching.cs</Link>
+    </Compile>
     <Compile Include="..\..\files\lib\core.cs">
       <Link>lib\core.cs</Link>
     </Compile>
