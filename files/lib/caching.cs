@@ -17,7 +17,7 @@ namespace DotNetSearchEngine
                 var temp = new ConcurrentDictionary<string, DataTable>();
                 cachedSearchResults.AddOrUpdate(settings.searchEngineName, temp, (key, oldValue) => temp);
             }
-
+                   
             //Checks to see if the current cached datatable under that particular search engine hame has changed as we need to clear the cache if so
             //Note: we do this as the main data coming in has changed and we cannot ensure the cached search results are now accurate so we start fresh.
             if (

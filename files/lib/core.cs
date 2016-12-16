@@ -23,7 +23,7 @@ namespace DotNetSearchEngine
                 }
 
                 //Checks if we managed to find any cached results
-                if (cResults != null)
+                if (cResults == null)
                 {
                     //Adds the weight column
                     temp.Columns.Add("dotnetsearch_search_weight");
