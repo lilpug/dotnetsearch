@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -32,7 +33,8 @@ namespace DotNetSearchEngine
                     results = CoreSearch(temp);
 
                     //Checks if caching is enabled and if so adds the new results
-                    if (settings.isCacheEnabled)
+                    //Note: we check the key in case they have run the clear cache, not reloaded the class before this function is hit
+                    if (settings.isCacheEnabled && cachedTables.ContainsKey(settings.searchEngineName))
                     {
                         AddCacheResult(settings.query, results);
                     }
@@ -124,7 +126,7 @@ namespace DotNetSearchEngine
                                 {
                                     //Calculates the unique weight
                                     int uniqueWeight = 0;
-                                    if (settings.weightings.ContainsKey(columnName))
+                                    if (settings.weightings != null && settings.weightings.ContainsKey(columnName))
                                     {
                                         uniqueWeight = settings.weightings[columnName];
                                     }

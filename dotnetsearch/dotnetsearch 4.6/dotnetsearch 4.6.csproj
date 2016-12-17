@@ -56,6 +56,12 @@
     <Compile Include="..\..\files\lib\core.cs">
       <Link>lib\core.cs</Link>
     </Compile>
+    <Compile Include="..\..\files\lib\dispose.cs">
+      <Link>lib\dispose.cs</Link>
+    </Compile>
+    <Compile Include="..\..\files\lib\helpers.cs">
+      <Link>lib\helpers.cs</Link>
+    </Compile>
     <Compile Include="..\..\files\lib\structures.cs">
       <Link>lib\structures.cs</Link>
     </Compile>

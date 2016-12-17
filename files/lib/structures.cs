@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Data;
 namespace DotNetSearchEngine
 {
+    //Note: these are serializable so we can use the deepclone function to copy the settings object on initialisation of the SearchEngine class
+
     //This is the orderby structured used for the priority of ordering
+    [Serializable]
     public class SearchOrderType
     {
         public bool isDescending { get; set; }
@@ -11,7 +14,8 @@ namespace DotNetSearchEngine
     }
 
     //This class stores all the parameters required for the main search engine to be initialised
-    public class SearchSettings
+    [Serializable]
+    public class SearchSettings : IDisposable
     {
         //Stores the search engine name which is used for caching
         /*Note: this is done so we can have multiple search engines in the same project but still use caching effectively
@@ -52,5 +56,44 @@ namespace DotNetSearchEngine
 
         //Stores the additional weight checking functions in case there needs to be more complex checks
         public List<Func<DataRow, string, int>> extraWeightChecks = null;
+
+        //Ensures the disposing is only called once
+        protected bool _disposed = false;
+
+        //This is the main dispose method
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        //This disposes of all the setting variables
+        protected void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    searchEngineName = null;
+                    isCacheEnabled = true;
+                    query = null;
+                    table.Dispose();
+                    table = null;
+                    weightings.Clear();
+                    weightings = null;
+                    orderBy.Clear();
+                    orderBy = null;
+                    allowDefault = true;
+                    ignoreFields = null;
+                    multiThreadCores = 0;
+                    maxReturn = 0;
+                    extraVerificationChecks.Clear();
+                    extraVerificationChecks = null;
+                    extraWeightChecks.Clear();
+                    extraWeightChecks = null;
+                }
+                _disposed = true;
+            }
+        }
     }
 }
