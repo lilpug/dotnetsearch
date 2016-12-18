@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -116,9 +115,17 @@ namespace DotNetSearchEngine
 
                             //Checks we are not suppose to ignore it
                             if (
-                                (settings.ignoreFields == null || !settings.ignoreFields.Contains(columnName)) && //Ensures the column is not within the ignore list
-                                columnName != "dotnetsearch_search_weight" && //Ensures the weight field is not in the search
-                                row[columnName] != null && row[columnName] != DBNull.Value //Ensures there is a data value in the field
+                                //If only specific fields have been targeted then it ensures this is one of them otherwise it ignores it
+                                (settings.onlyFieldsToCheck == null || settings.onlyFieldsToCheck.Contains(columnName)) &&
+
+                                //Ensures the column is not within the ignore list
+                                (settings.ignoreFields == null || !settings.ignoreFields.Contains(columnName)) &&
+
+                                //Ensures the weight field is not in the search
+                                columnName != "dotnetsearch_search_weight" &&
+
+                                //Ensures there is a data value in the field
+                                row[columnName] != null && row[columnName] != DBNull.Value
                                )
                             {
                                 int matchNumber = Regex.Matches(Regex.Escape(row[columnName].ToString().ToLower()), search).Count;

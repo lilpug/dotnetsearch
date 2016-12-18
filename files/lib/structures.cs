@@ -43,6 +43,10 @@ namespace DotNetSearchEngine
         //Stores any columns which we are to ignore in the datarows
         public string[] ignoreFields = null;
 
+        //Stores the only fields which should be checked in the datarows if specified 
+        //Note: if this is not specified then it searchs all but the ignored fields
+        public string[] onlyFieldsToCheck = null;
+
         //Stores how many cores we should be using to process the search results
         public int multiThreadCores = 1;
 
