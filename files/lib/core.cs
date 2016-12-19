@@ -222,8 +222,8 @@ namespace DotNetSearchEngine
                 }
             }
 
-            //Returns empty results as nothing was found
-            return new DataTable();
+            //Returns the same datatable passed as its empty and we need the columns to be the same
+            return searchResults;
         }
     }
 }
