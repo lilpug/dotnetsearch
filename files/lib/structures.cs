@@ -82,21 +82,20 @@ namespace DotNetSearchEngine
                 if (disposing)
                 {
                     searchEngineName = null;
-                    isCacheEnabled = true;
+                    isCacheEnabled = false;
+                    isCacheManualClearMode = false;
                     query = null;
                     table.Dispose();
-                    table = null;
-                    weightings.Clear();
+                    table = null;                    
                     weightings = null;
                     orderBy.Clear();
                     orderBy = null;
                     allowDefault = true;
                     ignoreFields = null;
+                    onlyFieldsToCheck = null;
                     multiThreadCores = 0;
-                    maxReturn = 0;
-                    extraVerificationChecks.Clear();
-                    extraVerificationChecks = null;
-                    extraWeightChecks.Clear();
+                    maxReturn = 0;                    
+                    extraVerificationChecks = null;                    
                     extraWeightChecks = null;
                 }
                 _disposed = true;

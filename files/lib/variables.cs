@@ -9,7 +9,7 @@ namespace DotNetSearchEngine
         //Holds the internal default weight to use
         readonly internal int defaultWeight = 1;
 
-        //Holds the settings object
+        //Holds the settings object        
         internal SearchSettings settings;
 
         //Used to lock the thread while adding a row or updating it
@@ -28,7 +28,7 @@ namespace DotNetSearchEngine
         public SearchEngine(SearchSettings searchSettings)
         {
             //Ensures it does not just reference the original settings but instead creates a clone of the settings object inside this object
-            settings = DeepClone(searchSettings);
+            settings = PureCopy(searchSettings);
 
             //Checks if caching is enabled and if so determines if the data has changed thats coming in
             if(settings.isCacheEnabled)

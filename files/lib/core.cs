@@ -59,47 +59,40 @@ namespace DotNetSearchEngine
         {
             //Splits the search up via spaces
             string[] searchTerms = settings.query.ToLower().Split(' ');
+            
+            //Holds all the records we deem accepted within this round of the search terms
+            DataTable tempStorage = new DataTable();
 
-            //Loops over the search definition
-            foreach (string search in searchTerms)
+            //Clones the records structure so they are the same for importing
+            tempStorage = records.Clone();
+
+            //loops over the different records via multithreading if cores specified
+            Parallel.ForEach(records.AsEnumerable(), new ParallelOptions { MaxDegreeOfParallelism = settings.multiThreadCores }, row =>
+            //foreach(DataRow row in records.Rows)
             {
-                //Holds all the records we deem accepted within this round of the search terms
-                DataTable tempStorage = new DataTable();
-
-                //Clones the records structure so they are the same for importing
-                tempStorage = records.Clone();
-
-                //loops over the different records via multithreading if cores specified
-                Parallel.ForEach(records.AsEnumerable(), new ParallelOptions { MaxDegreeOfParallelism = settings.multiThreadCores }, row =>
-                //foreach(DataRow row in records.Rows)
+                //Runs the additional column check functions if any exist before continueing
+                bool columnCheck = true;
+                if (settings.extraVerificationChecks != null && settings.extraVerificationChecks.Count > 0)
                 {
-                    //Runs the additional column check functions if any exist before continueing
-                    bool columnCheck = true;
-                    if (settings.extraVerificationChecks != null && settings.extraVerificationChecks.Count > 0)
+                    foreach (var function in settings.extraVerificationChecks)
                     {
-                        foreach (var function in settings.extraVerificationChecks)
+                        if (!function(row))
                         {
-                            if (!function(row))
-                            {
-                                columnCheck = false;
-                                break;
-                            }
+                            columnCheck = false;
+                            break;
                         }
                     }
+                }
 
-                    //Check if all extra verifications went ok "if no extra verifications then it defaults to true"
-                    if (columnCheck)
+                //Check if all extra verifications went ok "if no extra verifications then it defaults to true"
+                if (columnCheck)
+                {
+                    //These variables hold the weight of the search for that person
+                    int weight = 0;
+
+                    //Loops over all the search terms one by one to calculate the weight
+                    foreach (string search in searchTerms)
                     {
-                        //These variables hold the weight of the search for that person
-                        int weight = 0;
-                        int currentWeight = 0;
-
-                        //If its not empty "as this is not the first searchTerm" then it puts the previously calculated weight into the current
-                        if (row["dotnetsearch_search_weight"] != null && row["dotnetsearch_search_weight"] != DBNull.Value)
-                        {
-                            currentWeight = Convert.ToInt32(row["dotnetsearch_search_weight"].ToString());
-                        }
-
                         //Checks if there is any additional weight checking functions and if so runs through them
                         if (settings.extraWeightChecks != null && settings.extraWeightChecks.Count > 0)
                         {
@@ -126,7 +119,7 @@ namespace DotNetSearchEngine
 
                                 //Ensures there is a data value in the field
                                 row[columnName] != null && row[columnName] != DBNull.Value
-                               )
+                                )
                             {
                                 int matchNumber = Regex.Matches(Regex.Escape(row[columnName].ToString().ToLower()), search).Count;
                                 if (matchNumber > 0)
@@ -148,10 +141,16 @@ namespace DotNetSearchEngine
                                 }
                             }
                         }
-
-                        //Adds the current weight "if any from previous search words" -> "if not first search word it will be above zero"
-                        weight += currentWeight;
-
+                    }
+                        
+                    //Checks the weighting to see if we should keep it as a search record                                                            
+                    /* Example:
+                        This is because the currentWeight could be above zero due to being found against the first searchTerm
+                        but actually did not hit any of the second searchTerm criteria so has not changed. This would mean we
+                        do not want to keep the search record as its invalid against the search criteria.
+                        */
+                    if (weight > 0)
+                    {
                         //Puts the new weight against the record for that person
                         //Note: we need to lock this as we are writing to the datarow which is referenced from the single datatable 
                         //      although the datarow is singular its references from the datatable thus causing conflicts on a write in multi threads
@@ -160,28 +159,19 @@ namespace DotNetSearchEngine
                             row["dotnetsearch_search_weight"] = weight;
                         }
 
-                        //Checks the weighting to see if we should keep it as a search record                                                            
-                        /* Example:
-                            This is because the currentWeight could be above zero due to being found against the first searchTerm
-                            but actually did not hit any of the second searchTerm criteria so has not changed. This would mean we
-                            do not want to keep the search record as its invalid against the search criteria.
-                            */
-                        if (weight > 0 && weight > currentWeight)
+                        //Locks the thread while we add the row as writing operations are not threadsafe
+                        //Note: read operations are threadsafe.
+                        lock (addLocker)
                         {
-                            //Locks the thread while we add the row as writing operations are not threadsafe
-                            //Note: read operations are threadsafe.
-                            lock (addLocker)
-                            {
-                                //Adds the record
-                                tempStorage.ImportRow(row);
-                            }
+                            //Adds the record
+                            tempStorage.ImportRow(row);
                         }
                     }
-                });
+                }
+            });
 
-                //Puts the narrowed down search results into the records object as we will now refine the results if we have multiple search terms
-                records = tempStorage;
-            }
+            //Puts the narrowed down search results into the records object as we will now refine the results if we have multiple search terms
+            records = tempStorage;            
 
             //Returns the final results
             return records;
