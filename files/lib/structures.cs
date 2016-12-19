@@ -25,6 +25,9 @@ namespace DotNetSearchEngine
         //Stores the flag for determining if we use a cache on the data and the results
         public bool isCacheEnabled = true;
 
+        //Stores the flag for determining if the cache should auto clear itself or wait for a manual clear
+        public bool isCacheManualClearMode = false;
+
         //Stores the query string
         public string query = null;
 

@@ -6,14 +6,22 @@ namespace DotNetSearchEngine
 {
     public partial class SearchEngine
     {
-        //This function clears the cache for this particular search engine name.        
-        public void ClearCache()
+        //This function clears down the current cached search results
+        public bool ManuallyClearCache()
         {
-            if (settings.isCacheEnabled)
+            if (settings.isCacheEnabled && settings.isCacheManualClearMode)
             {
-                cachedTables.Clear();
-                cachedSearchResults.Clear();
+                //Clears the stored datatable for that specific search engine name
+                DataTable temp = null;
+                cachedTables.TryRemove(settings.searchEngineName, out temp);
+
+                //Clears any search results stored to that particular search name
+                cachedSearchResults[settings.searchEngineName].Clear();
+
+                return true;
             }
+
+            return false;
         }
 
         //This function is used to keep the cached table and results in sync with the current data being passed
@@ -41,18 +49,23 @@ namespace DotNetSearchEngine
                     table = orderResults.CopyToDataTable();
                 }
             }
-                   
+
             //Checks to see if the current cached datatable under that particular search engine hame has changed as we need to clear the cache if so
             //Note: we do this as the main data coming in has changed and we cannot ensure the cached search results are now accurate so we start fresh.
             if (
-                //Checks if its the first load of the cache
-                (!cachedTables.ContainsKey(settings.searchEngineName) || cachedTables[settings.searchEngineName] == null || cachedTables[settings.searchEngineName].Rows.Count == 0) ||
+                    //Checks if its the first load of the cache
+                    (!cachedTables.ContainsKey(settings.searchEngineName) || cachedTables[settings.searchEngineName] == null || cachedTables[settings.searchEngineName].Rows.Count == 0) ||
 
-                //Checks if the row counts are the same
-                (cachedTables[settings.searchEngineName].Rows.Count != table.Rows.Count) ||
+                    //If caching mode is not set to manual checks if the data has changed as we will need to reset the cache if so
+                    !settings.isCacheManualClearMode && 
+                    (
 
-                //Checks if the rows are the same literally the same
-                !cachedTables[settings.searchEngineName].AsEnumerable().SequenceEqual(table.AsEnumerable(), DataRowComparer.Default)
+                        //Checks if the row counts are the same
+                        (cachedTables[settings.searchEngineName].Rows.Count != table.Rows.Count) ||
+
+                        //Checks if the rows are the same literally the same
+                        !cachedTables[settings.searchEngineName].AsEnumerable().SequenceEqual(table.AsEnumerable(), DataRowComparer.Default)
+                    )
                 )
             {
                 //Puts the latest version of the table for that particular search engine name into the cached version as its now different
