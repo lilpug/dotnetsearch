@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ namespace DotNetSearchEngine
         public DataTable Run()
         {
             //Checks the table and query exists before continueing otherwise just returns the same table back
-            var temp = settings.table;
+            var temp = settings.table.Copy();
             if (temp != null && temp.Rows.Count > 0 && !string.IsNullOrWhiteSpace(settings.query))
             {
                 //Checks if caching is enabled and if we can find any results for this query thats being asked for
@@ -21,7 +22,7 @@ namespace DotNetSearchEngine
                 {
                     results = GetCacheResult(settings.query);
                 }
-
+                
                 //Checks if we managed to find any cached results
                 if (results == null)
                 {
@@ -40,7 +41,7 @@ namespace DotNetSearchEngine
                 }
 
                 //This section deals with ordering the new results found
-
+                
                 //Determines the order and what should be output from the search results found
                 var complete = ReturnResults(results);
 

@@ -27,8 +27,7 @@ namespace DotNetSearchEngine
         //Constructor for loading the passed settings
         public SearchEngine(SearchSettings searchSettings)
         {
-            //Ensures it does not just reference the original settings but instead creates a clone of the settings object inside this object
-            settings = PureCopy(searchSettings);
+            settings = searchSettings;
 
             //Checks if caching is enabled and if so determines if the data has changed thats coming in
             if(settings.isCacheEnabled)

@@ -6,7 +6,6 @@ namespace DotNetSearchEngine
     //Note: these are serializable so we can use the deepclone function to copy the settings object on initialisation of the SearchEngine class
 
     //This is the orderby structured used for the priority of ordering
-    [Serializable]
     public class SearchOrderType
     {
         public bool isDescending { get; set; }
@@ -14,7 +13,6 @@ namespace DotNetSearchEngine
     }
 
     //This class stores all the parameters required for the main search engine to be initialised
-    [Serializable]
     public class SearchSettings : IDisposable
     {
         //Stores the search engine name which is used for caching
