@@ -89,6 +89,8 @@ namespace DotNetSearchEngine
                 {
                     //These variables hold the weight of the search for that person
                     int weight = 0;
+                    int previousWeight = 0;
+                    bool ignoreStatus = false;
 
                     //Loops over all the search terms one by one to calculate the weight
                     foreach (string search in searchTerms)
@@ -141,15 +143,31 @@ namespace DotNetSearchEngine
                                 }
                             }
                         }
+
+                        //Adds the weight together with the previous weight to allow us to see if anythings changed
+                        weight += previousWeight;
+
+                        //Checks the weighting to see if we should keep it as a search record for anymore iterations or mark it as ignore
+                        if (weight > 0 && weight > previousWeight)
+                        {
+                            //Sets the previous weight for the next loop iteration if any
+                            previousWeight = weight;
+
+                            //Resets the weight ready for any other iterations
+                            weight = 0;
+                        }
+                        else
+                        {
+                            //Flags that we should not be adding this record to the overall search results
+                            ignoreStatus = true;
+
+                            //Breaks out the word checks as we have already failed at this point
+                            break;
+                        }
                     }
                         
-                    //Checks the weighting to see if we should keep it as a search record                                                            
-                    /* Example:
-                        This is because the currentWeight could be above zero due to being found against the first searchTerm
-                        but actually did not hit any of the second searchTerm criteria so has not changed. This would mean we
-                        do not want to keep the search record as its invalid against the search criteria.
-                        */
-                    if (weight > 0)
+                    //Checks if the ignore status is not active
+                    if (!ignoreStatus)
                     {
                         //Puts the new weight against the record for that person
                         //Note: we need to lock this as we are writing to the datarow which is referenced from the single datatable 
