@@ -106,7 +106,7 @@ namespace DotNetSearchEngine
 
                         foreach (var col in records.Columns)
                         {
-                            string columnName = col.ToString().ToLower();
+                            string columnName = col.ToString();
 
                             //Checks we are not suppose to ignore it
                             if (
