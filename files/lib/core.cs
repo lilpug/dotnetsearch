@@ -26,7 +26,7 @@ namespace DotNetSearchEngine
                 if (results == null)
                 {
                     //Adds the weight column
-                    temp.Columns.Add("dotnetsearch_search_weight");
+                    temp.Columns.Add("dotnetsearch_search_weight", typeof(int));
 
                     //This processes the search results from the records passed
                     results = CoreSearch(temp);
@@ -68,7 +68,7 @@ namespace DotNetSearchEngine
 
             //loops over the different records via multithreading if cores specified
             Parallel.ForEach(records.AsEnumerable(), new ParallelOptions { MaxDegreeOfParallelism = settings.multiThreadCores }, row =>
-            //foreach(DataRow row in records.Rows)
+            //foreach (DataRow row in records.Rows)
             {
                 //Runs the additional column check functions if any exist before continueing
                 bool columnCheck = true;
@@ -158,6 +158,10 @@ namespace DotNetSearchEngine
                         }
                         else
                         {
+                            //Resets the weights
+                            weight = 0;
+                            previousWeight = 0;
+
                             //Flags that we should not be adding this record to the overall search results
                             ignoreStatus = true;
 
@@ -165,7 +169,7 @@ namespace DotNetSearchEngine
                             break;
                         }
                     }
-                        
+
                     //Checks if the ignore status is not active
                     if (!ignoreStatus)
                     {
@@ -174,7 +178,7 @@ namespace DotNetSearchEngine
                         //      although the datarow is singular its references from the datatable thus causing conflicts on a write in multi threads
                         lock (updateLocker)
                         {
-                            row["dotnetsearch_search_weight"] = weight;
+                            row["dotnetsearch_search_weight"] = previousWeight;
                         }
 
                         //Locks the thread while we add the row as writing operations are not threadsafe
@@ -186,7 +190,8 @@ namespace DotNetSearchEngine
                         }
                     }
                 }
-            });
+             });       
+            
 
             //Puts the narrowed down search results into the records object as we will now refine the results if we have multiple search terms
             records = tempStorage;            
@@ -214,7 +219,7 @@ namespace DotNetSearchEngine
                     foreach (var item in orderPri)
                     {
                         if (settings.orderBy[item.Key].isDescending)
-                        {   
+                        {
                             //These are required as otherwise it fails on DBNulls                            
                             orderedQuery = orderedQuery.ThenByDescending(r => string.IsNullOrEmpty(Convert.ToString(r[item.Key])))
                                                        .ThenByDescending(r => Convert.ToString(r[item.Key]));
