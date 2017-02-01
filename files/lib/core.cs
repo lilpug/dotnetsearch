@@ -206,8 +206,15 @@ namespace DotNetSearchEngine
             //Loops to see if we have search results at the end of the processing
             if (searchResults.Rows.Count > 0)
             {
-                //Sorts it by the weights to start with
-                var orderedQuery = searchResults.AsEnumerable().OrderByDescending(l => l["dotnetsearch_search_weight"]);
+                //Stores the ordered by results as they are iterated over
+                OrderedEnumerableRowCollection<DataRow> orderedQuery = null;
+
+                //Checks if the flag is active and if makes the first ordering by the weight of the records
+                if (settings.orderByWeightFirst)
+                {
+                    //Sorts it by the weights to start with
+                    orderedQuery = searchResults.AsEnumerable().OrderByDescending(l => l["dotnetsearch_search_weight"]);
+                }
 
                 //Checks if we have more orderbys
                 if (settings.orderBy != null && settings.orderBy.Count > 0)
@@ -215,20 +222,39 @@ namespace DotNetSearchEngine
                     //Orders the orderby output via its priority so we do it in the order it was specified
                     var orderPri = settings.orderBy.OrderBy(l => l.Value.priorityLevel);
 
-                    //Loops over the orderbys and runs the linq orderbys
                     foreach (var item in orderPri)
                     {
                         if (settings.orderBy[item.Key].isDescending)
                         {
-                            //These are required as otherwise it fails on DBNulls                            
-                            orderedQuery = orderedQuery.ThenByDescending(r => string.IsNullOrEmpty(Convert.ToString(r[item.Key])))
-                                                       .ThenByDescending(r => Convert.ToString(r[item.Key]));
+                            //Checks if the weighting orderby flag has not been used and that if this is the first orderby
+                            if (orderedQuery == null)
+                            {
+                                //These are required as otherwise it fails on DBNulls                            
+                                orderedQuery = searchResults.AsEnumerable().OrderByDescending(r => string.IsNullOrEmpty(Convert.ToString(r[item.Key])))
+                                                           .ThenByDescending(r => Convert.ToString(r[item.Key]));
+                            }
+                            else
+                            {
+                                //These are required as otherwise it fails on DBNulls                            
+                                orderedQuery = orderedQuery.ThenByDescending(r => string.IsNullOrEmpty(Convert.ToString(r[item.Key])))
+                                                           .ThenByDescending(r => Convert.ToString(r[item.Key]));
+                            }
                         }
                         else
                         {
-                            //These are required as otherwise it fails on DBNulls                            
-                            orderedQuery = orderedQuery.ThenBy(r => string.IsNullOrEmpty(Convert.ToString(r[item.Key])))
-                                                       .ThenBy(r => Convert.ToString(r[item.Key]));
+                            //Checks if the weighting orderby flag has not been used and that if this is the first orderby
+                            if (orderedQuery == null)
+                            {
+                                //These are required as otherwise it fails on DBNulls                            
+                                orderedQuery = searchResults.AsEnumerable().OrderBy(r => string.IsNullOrEmpty(Convert.ToString(r[item.Key])))
+                                                           .ThenBy(r => Convert.ToString(r[item.Key]));
+                            }
+                            else
+                            {
+                                //These are required as otherwise it fails on DBNulls                            
+                                orderedQuery = orderedQuery.ThenBy(r => string.IsNullOrEmpty(Convert.ToString(r[item.Key])))
+                                                           .ThenBy(r => Convert.ToString(r[item.Key]));
+                            }
                         }
                     }
                 }

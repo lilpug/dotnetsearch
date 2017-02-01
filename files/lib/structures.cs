@@ -33,11 +33,14 @@ namespace DotNetSearchEngine
         public DataTable table = null;
 
         //Stores any additional field weighting requirements
-        public Dictionary<string, int> weightings = null;   
-        
+        public Dictionary<string, int> weightings = null;
+
+        //Flags if we should order by the search weights before processing the orderBy above    
+        public bool orderByWeightFirst = false;
+
         //Stores any orderby field requirements     
         public Dictionary<string, SearchOrderType> orderBy = null;        
-                
+        
         //Flags if we should use a standard weighting for every find
         public bool allowDefault = true;
         
@@ -86,8 +89,9 @@ namespace DotNetSearchEngine
                     table.Dispose();
                     table = null;                    
                     weightings = null;
+                    orderByWeightFirst = false;
                     orderBy.Clear();
-                    orderBy = null;
+                    orderBy = null;                    
                     allowDefault = true;
                     ignoreFields = null;
                     onlyFieldsToCheck = null;
