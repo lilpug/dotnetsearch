@@ -206,14 +206,12 @@ namespace DotNetSearchEngine
             //Loops to see if we have search results at the end of the processing
             if (searchResults.Rows.Count > 0)
             {
-                //Stores the ordered by results as they are iterated over
-                OrderedEnumerableRowCollection<DataRow> orderedQuery = null;
+                string orderby = "";
 
                 //Checks if the flag is active and if makes the first ordering by the weight of the records
                 if (settings.orderByWeightFirst)
                 {
-                    //Sorts it by the weights to start with
-                    orderedQuery = searchResults.AsEnumerable().OrderByDescending(l => l["dotnetsearch_search_weight"]);
+                    orderby += string.Format(",{0} DESC", "dotnetsearch_search_weight");
                 }
 
                 //Checks if we have more orderbys
@@ -224,50 +222,29 @@ namespace DotNetSearchEngine
 
                     foreach (var item in orderPri)
                     {
-                        if (settings.orderBy[item.Key].isDescending)
-                        {
-                            //Checks if the weighting orderby flag has not been used and that if this is the first orderby
-                            if (orderedQuery == null)
-                            {
-                                //These are required as otherwise it fails on DBNulls                            
-                                orderedQuery = searchResults.AsEnumerable().OrderByDescending(r => string.IsNullOrEmpty(Convert.ToString(r[item.Key])))
-                                                           .ThenByDescending(r => Convert.ToString(r[item.Key]));
-                            }
-                            else
-                            {
-                                //These are required as otherwise it fails on DBNulls                            
-                                orderedQuery = orderedQuery.ThenByDescending(r => string.IsNullOrEmpty(Convert.ToString(r[item.Key])))
-                                                           .ThenByDescending(r => Convert.ToString(r[item.Key]));
-                            }
-                        }
-                        else
-                        {
-                            //Checks if the weighting orderby flag has not been used and that if this is the first orderby
-                            if (orderedQuery == null)
-                            {
-                                //These are required as otherwise it fails on DBNulls                            
-                                orderedQuery = searchResults.AsEnumerable().OrderBy(r => string.IsNullOrEmpty(Convert.ToString(r[item.Key])))
-                                                           .ThenBy(r => Convert.ToString(r[item.Key]));
-                            }
-                            else
-                            {
-                                //These are required as otherwise it fails on DBNulls                            
-                                orderedQuery = orderedQuery.ThenBy(r => string.IsNullOrEmpty(Convert.ToString(r[item.Key])))
-                                                           .ThenBy(r => Convert.ToString(r[item.Key]));
-                            }
-                        }
+                        orderby += string.Format(",{0} {1}", item.Key, ((item.Value.isDescending) ? "DESC" : "ASC"));
                     }
+                }
+
+                //If we actually have any compiled order by then remove the first comma and use it for the view
+                if (!string.IsNullOrWhiteSpace(orderby))
+                {
+                    //Removes the first comma
+                    orderby = orderby.Remove(0,1);
+
+                    //Orders by our compiled orderby statement
+                    searchResults.DefaultView.Sort = orderby;
                 }
 
                 //Returns the number of search records specified
                 //Note: if the value is 0 or below it pulls everything!
                 if (settings.maxReturn <= 0)
                 {
-                    return orderedQuery.CopyToDataTable();
+                    return searchResults.Select().CopyToDataTable();
                 }
                 else
                 {
-                    return orderedQuery.Take(settings.maxReturn).CopyToDataTable();
+                    return searchResults.Select().Take(settings.maxReturn).CopyToDataTable();
                 }
             }
 
