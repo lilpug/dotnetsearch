@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -25,8 +26,9 @@ namespace DotNetSearchEngine
                 //Checks if we managed to find any cached results
                 if (results == null)
                 {
-                    //Adds the weight column
+                    //Adds the weight and full match flag columns
                     temp.Columns.Add("dotnetsearch_search_weight", typeof(int));
+                    temp.Columns.Add("dotnetsearch_search_found_full_match", typeof(bool));
 
                     //This processes the search results from the records passed
                     results = CoreSearch(temp);
@@ -44,9 +46,10 @@ namespace DotNetSearchEngine
                 //Determines the order and what should be output from the search results found
                 var complete = ReturnResults(results);
 
-                //Removes the weight column before returning
+                //Removes the weight and full match flag columns before returning
                 complete.Columns.Remove("dotnetsearch_search_weight");
-                
+                complete.Columns.Remove("dotnetsearch_search_found_full_match");
+
                 //Removes the weight column as we no longer need it now
                 return complete;                
             }
@@ -65,7 +68,7 @@ namespace DotNetSearchEngine
 
             //Clones the records structure so they are the same for importing
             tempStorage = records.Clone();
-
+            
             //loops over the different records via multithreading if cores specified
             Parallel.ForEach(records.AsEnumerable(), new ParallelOptions { MaxDegreeOfParallelism = settings.multiThreadCores }, row =>
             //foreach (DataRow row in records.Rows)
@@ -87,10 +90,13 @@ namespace DotNetSearchEngine
                 //Check if all extra verifications went ok "if no extra verifications then it defaults to true"
                 if (columnCheck)
                 {
-                    //These variables hold the weight of the search for that person
+                    //These variables hold the weight of the search for that item
                     int weight = 0;
                     int previousWeight = 0;
                     bool ignoreStatus = false;
+
+                    //Stores the flag for determining if a full match has been found
+                    bool foundExactMatch = false;
 
                     //Loops over all the search terms one by one to calculate the weight
                     foreach (string search in searchTerms)
@@ -119,14 +125,33 @@ namespace DotNetSearchEngine
                                 //Ensures the weight field is not in the search
                                 columnName != "dotnetsearch_search_weight" &&
 
+                                //Ensures the full match flag field is not in the search
+                                columnName != "dotnetsearch_search_found_full_match" &&
+
                                 //Ensures there is a data value in the field
-                                row[columnName] != null && row[columnName] != DBNull.Value
+                            row[columnName] != null && row[columnName] != DBNull.Value
                                 )
                             {
-                                int matchNumber = Regex.Matches(Regex.Escape(row[columnName].ToString().ToLower()), search).Count;
+                                int matchNumber = 0;
+                                
+                                //Adds the amount of occurances of the search
+                                matchNumber += Regex.Matches(Regex.Escape(row[columnName].ToString().ToLower()), search).Count;
+                                
+                                //Checks if it exists at all in the search term
                                 if (matchNumber > 0)
                                 {
-                                    //Calculates the unique weight
+                                    //If the string is an exact match it adds the extra full match weight to ensure its priority
+                                    //Note: this is only run if the flag is enabled
+                                    if (settings.addExtraFullMatchWeight && row[columnName].ToString().ToLower() == search)
+                                    {
+                                        //Adds the additional weight
+                                        matchNumber += settings.extraFullMatchWeight;
+
+                                        //Sets the flag so it knows we have an exact match
+                                        foundExactMatch = true;
+                                    }
+                                    
+                                    //Calculates the unique column weight
                                     int uniqueWeight = 0;
                                     if (settings.weightings != null && settings.weightings.ContainsKey(columnName))
                                     {
@@ -138,8 +163,12 @@ namespace DotNetSearchEngine
                                         uniqueWeight = (settings.allowDefault) ? defaultWeight : 0;
                                     }
 
-                                    //Multiples the weight by the amount of occurances within the regex as it should be greater if appears multiple times
-                                    weight += matchNumber * uniqueWeight;
+                                    //Checks if there is no exact match or the setting for only taking full matches is turned off
+                                    if (!foundExactMatch || !settings.isFullMatchOnly)
+                                    {
+                                        //Multiples the weight by the amount of occurances within the regex as it should be greater if appears multiple times
+                                        weight += matchNumber * uniqueWeight;
+                                    }
                                 }
                             }
                         }
@@ -165,6 +194,9 @@ namespace DotNetSearchEngine
                             //Flags that we should not be adding this record to the overall search results
                             ignoreStatus = true;
 
+                            //Resets the exact match found flag
+                            foundExactMatch = false;
+
                             //Breaks out the word checks as we have already failed at this point
                             break;
                         }
@@ -179,6 +211,7 @@ namespace DotNetSearchEngine
                         lock (updateLocker)
                         {
                             row["dotnetsearch_search_weight"] = previousWeight;
+                            row["dotnetsearch_search_found_full_match"] = foundExactMatch;
                         }
 
                         //Locks the thread while we add the row as writing operations are not threadsafe
@@ -206,12 +239,27 @@ namespace DotNetSearchEngine
             //Loops to see if we have search results at the end of the processing
             if (searchResults.Rows.Count > 0)
             {
-                string orderby = "";
+                //Checks if we should only be pulling the full match flagged results if we have some
+                if (settings.takeFullMatchOnlyWhenFound)
+                {
+                    //Does a linq query to pull only the results that have a true flag
+                    var tempResults = from row in searchResults.AsEnumerable()
+                                      where row.Field<bool>("dotnetsearch_search_found_full_match")
+                                      select row;
+
+                    //Checks if we have any results and if so we overwrites our current ones as we only want the full matches if we have some
+                    if(tempResults != null && tempResults.FirstOrDefault() != null)
+                    {
+                        searchResults = tempResults.CopyToDataTable();
+                    }
+                }
+
+                StringBuilder orderby = new StringBuilder();
 
                 //Checks if the flag is active and if makes the first ordering by the weight of the records
                 if (settings.orderByWeightFirst)
                 {
-                    orderby += string.Format(",{0} DESC", "dotnetsearch_search_weight");
+                    orderby.Append(string.Format(",{0} DESC", "dotnetsearch_search_weight"));
                 }
 
                 //Checks if we have more orderbys
@@ -222,18 +270,18 @@ namespace DotNetSearchEngine
 
                     foreach (var item in orderPri)
                     {
-                        orderby += string.Format(",{0} {1}", item.Key, ((item.Value.isDescending) ? "DESC" : "ASC"));
+                        orderby.Append(string.Format(",{0} {1}", item.Key, ((item.Value.isDescending) ? "DESC" : "ASC")));
                     }
                 }
 
                 //If we actually have any compiled order by then remove the first comma and use it for the view
-                if (!string.IsNullOrWhiteSpace(orderby))
+                if (orderby.Length > 0 && !string.IsNullOrWhiteSpace(orderby.ToString()))
                 {
                     //Removes the first comma
                     orderby = orderby.Remove(0,1);
 
                     //Orders by our compiled orderby statement
-                    searchResults.DefaultView.Sort = orderby;
+                    searchResults.DefaultView.Sort = orderby.ToString();
                 }
 
                 //Returns the number of search records specified

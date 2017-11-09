@@ -50,7 +50,7 @@ namespace DotNetSearchEngine
                 }
             }
 
-            //Checks to see if the current cached datatable under that particular search engine hame has changed as we need to clear the cache if so
+            //Checks to see if the current cached datatable under that particular search engine has changed as we need to clear the cache if so
             //Note: we do this as the main data coming in has changed and we cannot ensure the cached search results are now accurate so we start fresh.
             if (
                     //Checks if its the first load of the cache
@@ -63,7 +63,7 @@ namespace DotNetSearchEngine
                         //Checks if the row counts are the same
                         (cachedTables[settings.searchEngineName].Rows.Count != table.Rows.Count) ||
 
-                        //Checks if the rows are the same literally the same
+                        //Checks if the rows are the literally the same
                         !cachedTables[settings.searchEngineName].AsEnumerable().SequenceEqual(table.AsEnumerable(), DataRowComparer.Default)
                     )
                 )

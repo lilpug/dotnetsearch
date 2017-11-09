@@ -15,6 +15,20 @@ namespace DotNetSearchEngine
     //This class stores all the parameters required for the main search engine to be initialised
     public class SearchSettings : IDisposable
     {
+        //Stores the flag for determining if it should only be pulling back full matches when found
+        //This is used for only pulling full match results out when some are found otherwise will pull partials
+        public bool takeFullMatchOnlyWhenFound = false;
+
+        //This is used for making the search literally only look for full matches and not partial
+        public bool isFullMatchOnly = false;
+
+        public bool addExtraFullMatchWeight = false;
+        public int extraFullMatchWeight = 100;
+
+
+
+
+
         //Stores the search engine name which is used for caching
         /*Note: this is done so we can have multiple search engines in the same project but still use caching effectively
                 all that would be required is to change the name if its for a search on a different data set. */
