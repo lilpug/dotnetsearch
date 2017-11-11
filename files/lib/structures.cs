@@ -15,107 +15,148 @@ namespace DotNetSearchEngine
     //This class stores all the parameters required for the main search engine to be initialised
     public class SearchSettings : IDisposable
     {
-        //Stores the flag for determining if it should only be pulling back full matches when found
-        //This is used for only pulling full match results out when some are found otherwise will pull partials
+        /// <summary>
+        /// This variable stores the flag for determining if it should only be pulling back full matches when found
+        /// Note: This is used for only pulling full match results out when some are found otherwise will pull partials as well
+        /// </summary>
         public bool takeFullMatchOnlyWhenFound = false;
-
-        //This is used for making the search literally only look for full matches and not partial
+        
+        /// <summary>
+        /// This variable is used for making the search literally only look for full matches and not partial
+        /// </summary>
         public bool isFullMatchOnly = false;
-
+        
+        /// <summary>
+        /// This variable determines if additional weight should be added to exact matches found in the search process
+        /// </summary>
         public bool addExtraFullMatchWeight = false;
+
+        /// <summary>
+        /// This variable is used to add the additional weight if an exact match is found and the addExtraFullMatchWeight is enabled
+        /// </summary>
         public int extraFullMatchWeight = 100;
 
 
 
 
 
-        //Stores the search engine name which is used for caching
-        /*Note: this is done so we can have multiple search engines in the same project but still use caching effectively
-                all that would be required is to change the name if its for a search on a different data set. */
+        
+        
+        /// <summary>
+        /// This variable stores the search engine name which is used in the caching process
+        /// Note: This can be changed when you want to do multiple search engine runs in the same project.
+        /// </summary>
         public string searchEngineName = "dotnetsearch";
 
-        //Stores the flag for determining if we use a cache on the data and the results
+        /// <summary>
+        /// This variable stores the flag for determining if we use a cache on the data found and the results set
+        /// </summary>
         public bool isCacheEnabled = true;
 
         //Stores the flag for determining if the cache should auto clear itself or wait for a manual clear
+
+        /// <summary>
+        /// This variable stores the flag for determining if the cache should auto clear itself or wait for a manual clear
+        /// </summary>
         public bool isCacheManualClearMode = false;
 
-        //Stores the query string
-        public string query = null;
+        /// <summary>
+        /// This variable stores the search string
+        /// </summary>
+        public string searchString = null;
 
-        //Stores the datatable records to be searched
+        /// <summary>
+        /// This variable stores the datatable to perform the search engine process on
+        /// </summary>
         public DataTable table = null;
 
-        //Stores any additional field weighting requirements
+        /// <summary>
+        /// This variable stores any additional field weighting requirements
+        /// </summary>
         public Dictionary<string, int> weightings = null;
 
-        //Flags if we should order by the search weights before processing the orderBy above    
+        /// <summary>
+        /// This variable flags if we should order by the search weights before processing the orderBy    
+        /// </summary>
         public bool orderByWeightFirst = false;
 
-        //Stores any orderby field requirements     
-        public Dictionary<string, SearchOrderType> orderBy = null;        
-        
-        //Flags if we should use a standard weighting for every find
-        public bool allowDefault = true;
-        
-        //Stores any columns which we are to ignore in the datarows
-        public string[] ignoreFields = null;
+        /// <summary>
+        /// This variable stores any orderby field requirements     
+        /// </summary>
+        public Dictionary<string, SearchOrderType> orderBy = null;
 
-        //Stores the only fields which should be checked in the datarows if specified 
-        //Note: if this is not specified then it searchs all but the ignored fields
+        /// <summary>
+        /// This variable flags if we should use a standard weighting for every find
+        /// </summary>
+        public bool allowDefault = true;
+
+        /// <summary>
+        /// This variable stores any columns which we are to ignore in the search process
+        /// </summary>
+        public string[] ignoreFields = null;
+        
+        /// <summary>
+        /// This variable stores the only fields which should be checked in the search process if specified 
+        /// Note: if this is not specified then it searchs all but the ignored fields
+        /// </summary>
         public string[] onlyFieldsToCheck = null;
 
-        //Stores how many cores we should be using to process the search results
-        public int multiThreadCores = 1;
-
-        //Stores the max results that will be returned at the end
-        //Note: zero means all results returned "not capped"
+        /// <summary>
+        /// This variable stores how many cores we should be using to process the search results
+        /// </summary>
+        public int multiThreadedCores = 1;
+        
+        /// <summary>
+        /// Stores the max results that will be returned at the end
+        /// Note: zero means all results are returned "no max"
+        /// </summary>
         public int maxReturn = 0;
         
-        //Stores additional functions that can be added into the search criteria        
-        //Note: a false return will mean the row/record is not included in the weight checking        
+        /// <summary>
+        /// This variable stores additional functions that can be added into the search criteria        
+        /// Note: a false return will mean the row/record is not included in the search process
+        /// </summary>
         public List<Func<DataRow, bool>> extraVerificationChecks = null;
 
-        //Stores the additional weight checking functions in case there needs to be more complex checks
+        /// <summary>
+        /// This variable stores the additional weight checking functions in case there needs to be more complex checks in the search process
+        /// </summary>
         public List<Func<DataRow, string, int>> extraWeightChecks = null;
 
-        //Ensures the disposing is only called once
-        protected bool _disposed = false;
+        /// <summary>
+        /// This variable ensures the disposing is only called once
+        /// </summary>
+        protected bool isDisposed = false;
 
-        //This is the main dispose method
+        /// <summary>
+        /// This function disposes the variables inside the SearchSettings object
+        /// </summary>
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        //This disposes of all the setting variables
-        protected void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    searchEngineName = null;
-                    isCacheEnabled = false;
-                    isCacheManualClearMode = false;
-                    query = null;
-                    table.Dispose();
-                    table = null;                    
-                    weightings = null;
-                    orderByWeightFirst = false;
-                    orderBy.Clear();
-                    orderBy = null;                    
-                    allowDefault = true;
-                    ignoreFields = null;
-                    onlyFieldsToCheck = null;
-                    multiThreadCores = 0;
-                    maxReturn = 0;                    
-                    extraVerificationChecks = null;                    
-                    extraWeightChecks = null;
-                }
-                _disposed = true;
+            if (!isDisposed)
+            {   
+                searchEngineName = null;
+                isCacheEnabled = false;
+                isCacheManualClearMode = false;
+                searchString = null;
+                table.Dispose();
+                table = null;
+                weightings = null;
+                orderByWeightFirst = false;
+                orderBy.Clear();
+                orderBy = null;
+                allowDefault = true;
+                ignoreFields = null;
+                onlyFieldsToCheck = null;
+                multiThreadedCores = 0;
+                maxReturn = 0;
+                extraVerificationChecks = null;
+                extraWeightChecks = null;
+                
+                isDisposed = true;
             }
+
+            GC.SuppressFinalize(this);
         }
     }
 }

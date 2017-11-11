@@ -14,13 +14,13 @@ namespace DotNetSearchEngine
         {
             //Checks the table and query exists before continueing otherwise just returns the same table back
             var temp = settings.table.Copy();
-            if (temp != null && temp.Rows.Count > 0 && !string.IsNullOrWhiteSpace(settings.query))
+            if (temp != null && temp.Rows.Count > 0 && !string.IsNullOrWhiteSpace(settings.searchString))
             {
                 //Checks if caching is enabled and if we can find any results for this query thats being asked for
                 DataTable results = null;
                 if(settings.isCacheEnabled)
                 {
-                    results = GetCacheResult(settings.query);
+                    results = GetCacheResult(settings.searchString);
                 }
                 
                 //Checks if we managed to find any cached results
@@ -37,7 +37,7 @@ namespace DotNetSearchEngine
                     //Note: we check the key in case they have run the clear cache, not reloaded the class before this function is hit
                     if (settings.isCacheEnabled && cachedTables.ContainsKey(settings.searchEngineName))
                     {
-                        AddCacheResult(settings.query, results);
+                        AddCacheResult(settings.searchString, results);
                     }
                 }
 
@@ -61,7 +61,7 @@ namespace DotNetSearchEngine
         private DataTable CoreSearch(DataTable records)
         {
             //Splits the search up via spaces
-            string[] searchTerms = settings.query.ToLower().Split(' ');
+            string[] searchTerms = settings.searchString.ToLower().Split(' ');
             
             //Holds all the records we deem accepted within this round of the search terms
             DataTable tempStorage = new DataTable();
@@ -70,7 +70,7 @@ namespace DotNetSearchEngine
             tempStorage = records.Clone();
             
             //loops over the different records via multithreading if cores specified
-            Parallel.ForEach(records.AsEnumerable(), new ParallelOptions { MaxDegreeOfParallelism = settings.multiThreadCores }, row =>
+            Parallel.ForEach(records.AsEnumerable(), new ParallelOptions { MaxDegreeOfParallelism = settings.multiThreadedCores }, row =>
             //foreach (DataRow row in records.Rows)
             {
                 //Runs the additional column check functions if any exist before continueing
@@ -142,7 +142,12 @@ namespace DotNetSearchEngine
                                 {
                                     //If the string is an exact match it adds the extra full match weight to ensure its priority
                                     //Note: this is only run if the flag is enabled
-                                    if (settings.addExtraFullMatchWeight && row[columnName].ToString().ToLower() == search)
+
+                                    //Splits out the column values so we can check if we have an exact match
+                                    string[] columnValues = row[columnName].ToString().ToLower().Split(' ');
+
+                                    //Checks if we have any full matches
+                                    if (settings.addExtraFullMatchWeight && columnValues.Contains(search))
                                     {
                                         //Adds the additional weight
                                         matchNumber += settings.extraFullMatchWeight;
@@ -150,7 +155,10 @@ namespace DotNetSearchEngine
                                         //Sets the flag so it knows we have an exact match
                                         foundExactMatch = true;
                                     }
-                                    
+
+                                    //Clears the column values as its not longer needed
+                                    columnValues = null;
+
                                     //Calculates the unique column weight
                                     int uniqueWeight = 0;
                                     if (settings.weightings != null && settings.weightings.ContainsKey(columnName))
@@ -164,7 +172,7 @@ namespace DotNetSearchEngine
                                     }
 
                                     //Checks if there is no exact match or the setting for only taking full matches is turned off
-                                    if (!foundExactMatch || !settings.isFullMatchOnly)
+                                    if (foundExactMatch || !settings.isFullMatchOnly)
                                     {
                                         //Multiples the weight by the amount of occurances within the regex as it should be greater if appears multiple times
                                         weight += matchNumber * uniqueWeight;
